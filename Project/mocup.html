@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SleepWell - Monitor Tidur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 8px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .page {
+            display: none;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Welcome Page */
+        .welcome-page {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .welcome-logo {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .welcome-logo::before {
+            content: "🌙";
+            font-size: 60px;
+        }
+
+        .welcome-title {
+            color: #fff;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .welcome-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 18px;
+            margin-bottom: 50px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #fff;
+            color: #667eea;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Auth Pages */
+        .auth-page {
+            background: #f8f9ff;
+            padding: 60px 30px 30px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            cursor: pointer;
+        }
+
+        /* Main App Pages */
+        .main-page {
+            background: #f8f9ff;
+            padding-top: 44px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 30px 30px;
+            color: #fff;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header-subtitle {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 20px 30px;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Monitoring Page */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .sensor-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .sensor-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .sensor-label {
+            font-size: 12px;
+            color: #718096;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sensor-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .sensor-unit {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .sleep-status {
+            background: #fff;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .sleep-indicator {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4fd1c7 0%, #06b6d4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 30px;
+        }
+
+        .sleep-label {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .sleep-time {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        /* Tips Page */
+        .tip-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .tip-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tip-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .tip-description {
+            color: #718096;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            padding: 15px 0 25px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+            color: #718096;
+        }
+
+        .nav-item.active .nav-icon {
+            color: #667eea;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .nav-item.active .nav-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 54px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="screen">
+            <div class="status-bar">
+                <span>9:41</span>
+                <span>●●●</span>
+                <span>100%</span>
+            </div>
+
+            <!-- Welcome Page -->
+            <div class="page welcome-page active" id="welcome">
+                <div class="welcome-logo"></div>
+                <h1 class="welcome-title">SleepWell</h1>
+                <p class="welcome-subtitle">Monitor kualitas tidur Anda dengan teknologi sensor canggih</p>
+                <button class="btn btn-primary" onclick="showPage('signin')">Masuk</button>
+                <button class="btn btn-secondary" onclick="showPage('signup')">Daftar</button>
+            </div>
+
+            <!-- Sign In Page -->
+            <div class="page auth-page" id="signin">
+                <button class="back-btn" onclick="showPage('welcome')">←</button>
+                <div class="auth-header">
+                    <h2 class="auth-title">Selamat Datang</h2>
+                    <p class="auth-subtitle">Masuk ke akun Anda</p>
+                </div>
+                <form>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" placeholder="Masukkan email Anda">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" placeholder="Masukkan password">
+                    </div>
+                    <button type="button" class="auth-btn" onclick="showPage('monitoring')">Masuk</button>
+                </form>
+                <div class="auth-link" onclick="showPage('signup')">
+                    Belum punya akun? Daftar sekarang
+                </div>
+            </div>
+
+            <!-- Sign Up Page -->
+            <div class="page auth-page" id="signup">
+                <button class="back-btn" onclick="showPage('welcome')">←</button>
+                <div class="auth-header">
+                    <h2 class="auth-title">Buat Akun</h2>
+                    <p class="auth-subtitle">Daftar untuk memulai monitoring tidur</p>
+                </div>
+                <form>
+                    <div class="form-group">
+                        <label class="form-label">Nama Lengkap</label>
+                        <input type="text" class="form-input" placeholder="Masukkan nama lengkap">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" placeholder="Masukkan email Anda">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" placeholder="Buat password">
+                    </div>
+                    <button type="button" class="auth-btn" onclick="showPage('monitoring')">Daftar</button>
+                </form>
+                <div class="auth-link" onclick="showPage('signin')">
+                    Sudah punya akun? Masuk di sini
+                </div>
+            </div>
+
+            <!-- Monitoring Page -->
+            <div class="page main-page" id="monitoring">
+                <div class="header">
+                    <h1 class="header-title">Sleep Monitor</h1>
+                    <p class="header-subtitle">Status tidur real-time</p>
+                </div>
+                
+                <div class="content">
+                    <div class="sleep-status">
+                        <div class="sleep-indicator">😴</div>
+                        <div class="sleep-label">Tidur Nyenyak</div>
+                        <div class="sleep-time">Tidur selama 6 jam 32 menit</div>
+                    </div>
+
+                    <div class="sensor-grid">
+                        <div class="sensor-card">
+                            <div class="sensor-icon">💡</div>
+                            <div class="sensor-label">Cahaya</div>
+                            <div class="sensor-value">12 <span class="sensor-unit">lux</span></div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-icon">🔊</div>
+                            <div class="sensor-label">Suara</div>
+                            <div class="sensor-value">28 <span class="sensor-unit">dB</span></div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-icon">📱</div>
+                            <div class="sensor-label">Gerakan</div>
+                            <div class="sensor-value">Low</div>
+                        </div>
+                        <div class="sensor-card">
+                            <div class="sensor-icon">🌡️</div>
+                            <div class="sensor-label">Suhu</div>
+                            <div class="sensor-value">24°C</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-nav">
+                    <div class="nav-item active" onclick="showPage('monitoring')">
+                        <div class="nav-icon">📊</div>
+                        <div class="nav-label">Monitor</div>
+                    </div>
+                    <div class="nav-item" onclick="showPage('tips')">
+                        <div class="nav-icon">💡</div>
+                        <div class="nav-label">Tips</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Page -->
+            <div class="page main-page" id="tips">
+                <div class="header">
+                    <h1 class="header-title">Tips Tidur</h1>
+                    <p class="header-subtitle">Panduan tidur lebih berkualitas</p>
+                </div>
+                
+                <div class="content">
+                    <div class="tip-card">
+                        <div class="tip-title">
+                            <span class="tip-icon">🕘</span>
+                            Jadwal Tidur Teratur
+                        </div>
+                        <div class="tip-description">
+                            Tidur dan bangun pada waktu yang sama setiap hari, termasuk akhir pekan. Ini membantu mengatur jam biologis tubuh Anda.
+                        </div>
+                    </div>
+
+                    <div class="tip-card">
+                        <div class="tip-title">
+                            <span class="tip-icon">🌙</span>
+                            Lingkungan Tidur Optimal
+                        </div>
+                        <div class="tip-description">
+                            Pastikan kamar tidur gelap, sejuk (18-22°C), dan tenang. Gunakan tirai tebal atau penutup mata jika perlu.
+                        </div>
+                    </div>
+
+                    <div class="tip-card">
+                        <div class="tip-title">
+                            <span class="tip-icon">📱</span>
+                            Hindari Layar Sebelum Tidur
+                        </div>
+                        <div class="tip-description">
+                            Matikan gadget 1-2 jam sebelum tidur. Cahaya biru dari layar dapat mengganggu produksi melatonin.
+                        </div>
+                    </div>
+
+                    <div class="tip-card">
+                        <div class="tip-title">
+                            <span class="tip-icon">🧘</span>
+                            Rutinitas Relaksasi
+                        </div>
+                        <div class="tip-description">
+                            Lakukan aktivitas menenangkan sebelum tidur seperti membaca, meditasi, atau mandi air hangat.
+                        </div>
+                    </div>
+
+                    <div class="tip-card">
+                        <div class="tip-title">
+                            <span class="tip-icon">☕</span>
+                            Batasi Kafein
+                        </div>
+                        <div class="tip-description">
+                            Hindari kafein 6 jam sebelum tidur. Kafein dapat bertahan dalam sistem tubuh hingga 8 jam.
+                        </div>
+                    </div>
+
+                    <div class="tip-card">
+                        <div class="tip-title">
+                            <span class="tip-icon">🏃</span>
+                            Olahraga Teratur
+                        </div>
+                        <div class="tip-description">
+                            Berolahraga secara teratur dapat meningkatkan kualitas tidur, tapi hindari olahraga berat 3 jam sebelum tidur.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-nav">
+                    <div class="nav-item" onclick="showPage('monitoring')">
+                        <div class="nav-icon">📊</div>
+                        <div class="nav-label">Monitor</div>
+                    </div>
+                    <div class="nav-item active" onclick="showPage('tips')">
+                        <div class="nav-icon">💡</div>
+                        <div class="nav-label">Tips</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // Hide all pages
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update navigation if on main pages
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            if (pageId === 'monitoring') {
+                navItems[0].classList.add('active');
+            } else if (pageId === 'tips') {
+                navItems[1].classList.add('active');
+            }
+        }
+
+        // Simulate real-time sensor data updates
+        function updateSensorData() {
+            const lightValue = Math.floor(Math.random() * 50) + 5;
+            const soundValue = Math.floor(Math.random() * 40) + 20;
+            const tempValue = Math.floor(Math.random() * 6) + 22;
+            
+            const movements = ['Low', 'Medium', 'High'];
+            const movementValue = movements[Math.floor(Math.random() * movements.length)];
+            
+            // Update values if monitoring page is active
+            if (document.getElementById('monitoring').classList.contains('active')) {
+                const sensorCards = document.querySelectorAll('.sensor-value');
+                if (sensorCards.length >= 4) {
+                    sensorCards[0].innerHTML = `${lightValue} <span class="sensor-unit">lux</span>`;
+                    sensorCards[1].innerHTML = `${soundValue} <span class="sensor-unit">dB</span>`;
+                    sensorCards[2].innerHTML = movementValue;
+                    sensorCards[3].innerHTML = `${tempValue}°C`;
+                }
+            }
+        }
+
+        // Update sensor data every 3 seconds
+        setInterval(updateSensorData, 3000);
+    </script>
+</body>
+</html>

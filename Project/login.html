@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Monitor - Sign In/Sign Up</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: floatBackground 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes floatBackground {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 0.3;
+            }
+            50% {
+                transform: scale(1.1) rotate(2deg);
+                opacity: 0.5;
+            }
+        }
+
+        .auth-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            background: linear-gradient(135deg, #ffffff 0%, #a8edea 50%, #fed6e3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .logo p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .form-toggle {
+            display: flex;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.4),
+                0 2px 4px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .toggle-btn:hover:not(.active) {
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 3px rgba(102, 126, 234, 0.2),
+                0 4px 12px rgba(102, 126, 234, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.4),
+                0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(102, 126, 234, 0.6),
+                0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.2),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sleep-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <div class="sleep-icon">🌙</div>
+            <h1>Sleep Monitor</h1>
+            <p>Pantau kualitas tidur Anda</p>
+        </div>
+
+        <div class="form-toggle">
+            <button class="toggle-btn active" onclick="toggleForm('signin')">Sign In</button>
+            <button class="toggle-btn" onclick="toggleForm('signup')">Sign Up</button>
+        </div>
+
+        <form id="authForm">
+            <div class="form-group" id="nameGroup" style="display: none;">
+                <label for="fullName">Nama Lengkap</label>
+                <input type="text" id="fullName" placeholder="Masukkan nama lengkap">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Masukkan email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Masukkan password" required>
+            </div>
+
+            <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                <label for="confirmPassword">Konfirmasi Password</label>
+                <input type="password" id="confirmPassword" placeholder="Konfirmasi password">
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span id="btnText">Sign In</span>
+            </button>
+        </form>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // Konfigurasi Supabase
+        const SUPABASE_URL = 'https://jihiocajzxsghtqzjegl.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppaGlvY2FqenhzZ2h0cXpqZWdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNDI4MTksImV4cCI6MjA2NTgxODgxOX0._S9Fsl5rS6v3o3Bl0owgCQii51LFtQYqMNAY36U_2mQ';
+
+        // Cek apakah Supabase sudah dimuat
+        let supabase;
+        
+        function initializeSupabase() {
+            try {
+                if (typeof window.supabase !== 'undefined') {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('Supabase initialized successfully');
+                    return true;
+                } else {
+                    throw new Error('Supabase library not loaded');
+                }
+            } catch (error) {
+                console.error('Failed to initialize Supabase:', error);
+                showMessage('Gagal menginisialisasi koneksi database. Silakan refresh halaman.', 'error');
+                return false;
+            }
+        }
+
+        // Initialize ketika DOM loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (!initializeSupabase()) {
+                    // Retry setelah 2 detik
+                    setTimeout(() => {
+                        if (initializeSupabase()) {
+                            setupAuthListener();
+                            checkExistingSession();
+                        }
+                    }, 2000);
+                } else {
+                    setupAuthListener();
+                    // Cek apakah user sudah login
+                    setTimeout(checkExistingSession, 500);
+                }
+            }, 1000);
+        });
+
+        let currentMode = 'signin';
+
+        function toggleForm(mode) {
+            currentMode = mode;
+            const nameGroup = document.getElementById('nameGroup');
+            const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+            const btnText = document.getElementById('btnText');
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
+
+            // Update toggle buttons
+            toggleBtns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Clear form
+            document.getElementById('authForm').reset();
+            showMessage('', '');
+
+            if (mode === 'signup') {
+                nameGroup.style.display = 'block';
+                confirmPasswordGroup.style.display = 'block';
+                btnText.textContent = 'Sign Up';
+            } else {
+                nameGroup.style.display = 'none';
+                confirmPasswordGroup.style.display = 'none';
+                btnText.textContent = 'Sign In';
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = type ? `message ${type}` : '';
+        }
+
+        function setLoading(isLoading) {
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+
+            if (isLoading) {
+                submitBtn.disabled = true;
+                btnText.innerHTML = '<span class="loading"></span>';
+            } else {
+                submitBtn.disabled = false;
+                btnText.textContent = currentMode === 'signin' ? 'Sign In' : 'Sign Up';
+            }
+        }
+
+        async function handleSignUp(email, password, fullName) {
+            if (!supabase) {
+                showMessage('Koneksi database belum siap. Silakan coba lagi.', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                if (data.user) {
+                    showMessage('Akun berhasil dibuat! Silakan cek email untuk verifikasi.', 'success');
+                    
+                    // Insert user data ke tabel users (opsional)
+                    const { error: insertError } = await supabase
+                        .from('users')
+                        .insert([
+                            {
+                                id: data.user.id,
+                                email: email,
+                                full_name: fullName,
+                                created_at: new Date().toISOString()
+                            }
+                        ]);
+
+                    if (insertError) {
+                        console.error('Error inserting user data:', insertError);
+                    }
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleSignIn(email, password) {
+            if (!supabase) {
+                showMessage('Koneksi database belum siap. Silakan coba lagi.', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                showMessage('Login berhasil! Mengalihkan ke halaman monitoring...', 'success');
+                
+                // Redirect ke halaman monitoring setelah login berhasil
+                setTimeout(() => {
+                    window.location.href = 'home.html';
+                }, 1500);
+
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const fullName = document.getElementById('fullName').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validasi
+            if (!email || !password) {
+                showMessage('Email dan password harus diisi!', 'error');
+                return;
+            }
+
+            if (currentMode === 'signup') {
+                if (!fullName) {
+                    showMessage('Nama lengkap harus diisi!', 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showMessage('Password dan konfirmasi password tidak cocok!', 'error');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showMessage('Password minimal 6 karakter!', 'error');
+                    return;
+                }
+            }
+
+            setLoading(true);
+
+            try {
+                if (currentMode === 'signup') {
+                    await handleSignUp(email, password, fullName);
+                } else {
+                    await handleSignIn(email, password);
+                }
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Check if user is already logged in
+        function setupAuthListener() {
+            if (!supabase) return;
+            
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    console.log('User is signed in:', session.user);
+                    // Hanya redirect jika ini adalah login baru, bukan saat halaman dimuat
+                    // Redirect dilakukan di handleSignIn function
+                } else if (event === 'SIGNED_OUT') {
+                    console.log('User is signed out');
+                    // Handle sign out - tetap di halaman login
+                }
+            });
+        }
+
+        // Cek apakah user sudah login saat halaman dimuat
+        async function checkExistingSession() {
+            if (!supabase) return;
+            
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error('Error checking session:', error);
+                    return;
+                }
+                
+                if (session && session.user) {
+                    // User sudah login, tampilkan opsi untuk ke monitoring atau logout
+                    showSessionInfo(session.user);
+                }
+            } catch (error) {
+                console.error('Error checking existing session:', error);
+            }
+        }
+
+        function showSessionInfo(user) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `
+                <div style="text-align: center; padding: 25px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; color: #10b981; backdrop-filter: blur(10px);">
+                    <p style="margin-bottom: 20px; font-weight: 600;"><strong>✅ Anda sudah login sebagai:</strong><br><span style="color: rgba(255, 255, 255, 0.9);">${user.email}</span></p>
+                    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="goToMonitoring()" style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            🏠 Ke Halaman Home
+                        </button>
+                        <button onclick="logout()" style="padding: 12px 24px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            🚪 Logout
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function goToMonitoring() {
+            window.location.href = 'monitoring.html';
+        }
+
+        async function logout() {
+            if (!supabase) return;
+            
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                
+                // Clear message dan reset form
+                showMessage('Berhasil logout.', 'success');
+                document.getElementById('authForm').reset();
+                
+                setTimeout(() => {
+                    showMessage('', '');
+                }, 2000);
+                
+            } catch (error) {
+                showMessage(`Error logout: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
